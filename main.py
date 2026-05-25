@@ -3,7 +3,7 @@
 A game similar to the famous Chrome Dino Game, built using pygame-ce.
 Made by intern: @bassemfarid, no one or nothing else. 🤖
 """
-
+score = 0
 import pygame
 
 # Initialize Pygame and create a window
@@ -22,8 +22,8 @@ players_gravity_speed = 0  # The current speed at which the player falls
 SKY_SURF = pygame.image.load("graphics/level/sky.png").convert()
 GROUND_SURF = pygame.image.load("graphics/level/ground.png").convert()
 game_font = pygame.font.Font(pygame.font.get_default_font(), 50)
-score_surf = game_font.render("SCORE?", False, "Black")
-score_rect = score_surf.get_rect(center=(400, 50))
+score_surf = game_font.render(f"SCORE: {score}", False, "Black")
+score_rect = score_surf.get_rect(topright=(220, 0))
 
 # Load sprite assets
 player_surf = pygame.image.load("graphics/player/player_walk_1.png").convert_alpha()
@@ -79,6 +79,11 @@ while running:
         # When player collides with enemy, game ends
         if egg_rect.colliderect(player_rect):
             is_playing = False
+        # while is_playing:
+        #     if egg_rect.x == player_rect.x:
+        #         score += 1
+        #     else:
+        #         continue
 
     # When game is over, display game over message
     else:
