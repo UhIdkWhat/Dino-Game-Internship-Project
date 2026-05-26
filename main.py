@@ -5,6 +5,8 @@ Made by intern: @bassemfarid, no one or nothing else. 🤖
 """
 score = 0
 kept_score = 0
+difficulty = 1
+set_score = 0
 import pygame
 x = 1
 # Initialize Pygame and create a window
@@ -58,17 +60,28 @@ while running:
         # Blit the level assets
         screen.blit(SKY_SURF, (0, 0))
         screen.blit(GROUND_SURF, (0, GROUND_Y))
-        score_surf = game_font.render(f"SCORE: {score}", False, "Black")
-        score_rect = score_surf.get_rect(topright=(300, 0))
+        score_surf = game_font.render(f"SCORE: {score:.0f}", False, "Black")
+        score_rect = score_surf.get_rect(topleft=(10, 0))
         pygame.draw.rect(screen, "#c0e8ec", score_rect)
         pygame.draw.rect(screen, "#c0e8ec", score_rect, 10)
         screen.blit(score_surf, score_rect)
 
         # Adjust egg's horizontal location then blit it
-        egg_rect.x -= 5
-        if egg_rect.right <= 0:
-            egg_rect.left = 800
-        screen.blit(egg_surf, egg_rect)
+        if difficulty == 1:
+            egg_rect.x -= 5 * difficulty
+            if egg_rect.right <= 0:
+                egg_rect.left = 800
+            screen.blit(egg_surf, egg_rect)
+        elif difficulty > 1 and difficulty < 4:
+            egg_rect.x -= 5 * (difficulty/1.5)
+            if egg_rect.right <= 0:
+                egg_rect.left = 800
+            screen.blit(egg_surf, egg_rect)
+        else:
+            egg_rect.x -= 5 * difficulty
+            if egg_rect.right <= 0:
+                egg_rect.left = 800
+            screen.blit(egg_surf, egg_rect)
 
         # Adjust player's vertical location then blit it
         players_gravity_speed += 1
@@ -76,13 +89,21 @@ while running:
         if player_rect.bottom > GROUND_Y:
             player_rect.bottom = GROUND_Y
         screen.blit(player_surf, player_rect)
-
+        if score == 100:
+            difficulty += 1
+            set_score += 100
+        elif score == set_score * difficulty:
+            difficulty +=1
         # When player collides with enemy, game ends
         if egg_rect.colliderect(player_rect):
             is_playing = False
             kept_score += score
             score = 0
-        score += 1
+            difficulty = 1
+        if score < 100:
+            score += 0.5
+        else:
+            score += 1
 
 
     # When game is over, display game over message
