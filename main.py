@@ -4,8 +4,9 @@ A game similar to the famous Chrome Dino Game, built using pygame-ce.
 Made by intern: @bassemfarid, no one or nothing else. 🤖
 """
 score = 0
+kept_score = 0
 import pygame
-
+x = 1
 # Initialize Pygame and create a window
 pygame.init()
 screen = pygame.display.set_mode((800, 400))
@@ -22,8 +23,6 @@ players_gravity_speed = 0  # The current speed at which the player falls
 SKY_SURF = pygame.image.load("graphics/level/sky.png").convert()
 GROUND_SURF = pygame.image.load("graphics/level/ground.png").convert()
 game_font = pygame.font.Font(pygame.font.get_default_font(), 50)
-score_surf = game_font.render(f"SCORE: {score}", False, "Black")
-score_rect = score_surf.get_rect(topright=(220, 0))
 
 # Load sprite assets
 player_surf = pygame.image.load("graphics/player/player_walk_1.png").convert_alpha()
@@ -55,10 +54,12 @@ while running:
 
     if is_playing:
         screen.fill("purple")  # Wipe the screen
-
+        kept_score = 0
         # Blit the level assets
         screen.blit(SKY_SURF, (0, 0))
         screen.blit(GROUND_SURF, (0, GROUND_Y))
+        score_surf = game_font.render(f"SCORE: {score}", False, "Black")
+        score_rect = score_surf.get_rect(topright=(300, 0))
         pygame.draw.rect(screen, "#c0e8ec", score_rect)
         pygame.draw.rect(screen, "#c0e8ec", score_rect, 10)
         screen.blit(score_surf, score_rect)
@@ -79,11 +80,10 @@ while running:
         # When player collides with enemy, game ends
         if egg_rect.colliderect(player_rect):
             is_playing = False
-        # while is_playing:
-        #     if egg_rect.x == player_rect.x:
-        #         score += 1
-        #     else:
-        #         continue
+            kept_score += score
+            score = 0
+        score += 1
+
 
     # When game is over, display game over message
     else:
