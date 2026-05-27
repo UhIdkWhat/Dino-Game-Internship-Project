@@ -6,7 +6,7 @@ Made by intern: @bassemfarid, no one or nothing else. 🤖
 score = 0
 kept_score = 0
 difficulty = 1
-set_score = 0
+set_score = 500
 import pygame
 x = 1
 # Initialize Pygame and create a window
@@ -20,7 +20,7 @@ is_playing = True  # Whether in game or in menu
 GROUND_Y = 300  # The Y-coordinate of the ground level
 JUMP_GRAVITY_START_SPEED = -20  # The speed at which the player jumps
 players_gravity_speed = 0  # The current speed at which the player falls
-
+increase_gravity = -25 #change in gravity 
 # Load level assets
 SKY_SURF = pygame.image.load("graphics/level/sky.png").convert()
 GROUND_SURF = pygame.image.load("graphics/level/ground.png").convert()
@@ -48,6 +48,7 @@ while running:
                 or event.type == pygame.MOUSEBUTTONDOWN
             ) and player_rect.bottom >= GROUND_Y:
                 players_gravity_speed = JUMP_GRAVITY_START_SPEED
+
         else:
             # When player wants to play again by pressing SPACE
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
@@ -66,7 +67,7 @@ while running:
         pygame.draw.rect(screen, "#c0e8ec", score_rect, 10)
         screen.blit(score_surf, score_rect)
 
-        # Adjust egg's horizontal location then blit it
+        # Adjust egg's horizontal location then blit it depending on difficulty
         if difficulty == 1:
             egg_rect.x -= 5 * difficulty
             if egg_rect.right <= 0:
@@ -89,21 +90,21 @@ while running:
         if player_rect.bottom > GROUND_Y:
             player_rect.bottom = GROUND_Y
         screen.blit(player_surf, player_rect)
-        if score == 100:
+        # Increasing difficulty and increasing the amount of score you get
+        if score == 500:
             difficulty += 1
-            set_score += 100
         elif score == set_score * difficulty:
             difficulty +=1
-        # When player collides with enemy, game ends
+        if score < 500:
+            score += 0.5
+        else:
+            score += 1
+        # When player collides with enemy, game ends resets all variables
         if egg_rect.colliderect(player_rect):
             is_playing = False
             kept_score += score
             score = 0
             difficulty = 1
-        if score < 100:
-            score += 0.5
-        else:
-            score += 1
 
 
     # When game is over, display game over message
