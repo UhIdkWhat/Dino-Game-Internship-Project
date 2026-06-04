@@ -7,6 +7,7 @@ score = 0
 kept_score = 0
 difficulty = 1
 set_score = 500
+jump_counter = 2
 import pygame
 x = 1
 # Initialize Pygame and create a window
@@ -18,7 +19,7 @@ running = True  # Pygame main loop, kills pygame when False
 # Game state variables
 is_playing = True  # Whether in game or in menu
 GROUND_Y = 300  # The Y-coordinate of the ground level
-JUMP_GRAVITY_START_SPEED = -20  # The speed at which the player jumps
+JUMP_GRAVITY_START_SPEED = -16.5  # The speed at which the player jumps
 players_gravity_speed = 0  # The current speed at which the player falls
 increase_gravity = -25 #change in gravity 
 # Load level assets
@@ -27,9 +28,10 @@ GROUND_SURF = pygame.image.load("graphics/level/ground.png").convert()
 game_font = pygame.font.Font(pygame.font.get_default_font(), 50)
 
 # Load sprite assets
-player_surf = pygame.image.load("graphics/player/player_walk_1.png").convert_alpha()
-player_rect = player_surf.get_rect(bottomleft=(25, GROUND_Y))
+player_surf = pygame.image.load("graphics/player/e0.png").convert_alpha()
+player_rect = player_surf.get_rect(bottomleft=(10, GROUND_Y))
 egg_surf = pygame.image.load("graphics/egg/egg_1.png").convert_alpha()
+
 egg_rect = egg_surf.get_rect(bottomleft=(800, GROUND_Y))
 
 
@@ -73,7 +75,7 @@ while running:
             if egg_rect.right <= 0:
                 egg_rect.left = 800
             screen.blit(egg_surf, egg_rect)
-        elif difficulty > 1 and difficulty < 4:
+        elif difficulty > 1 and difficulty < 6:
             egg_rect.x -= 5 * (difficulty/1.5)
             if egg_rect.right <= 0:
                 egg_rect.left = 800
