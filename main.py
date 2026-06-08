@@ -10,6 +10,9 @@ set_score = 500
 jump_counter = 2
 import pygame
 x = 1
+def player_animation():
+    #playing jumping animation if player is not on floor
+    global player_index, player_idle
 # Initialize Pygame and create a window
 pygame.init()
 screen = pygame.display.set_mode((800, 400))
@@ -28,13 +31,25 @@ GROUND_SURF = pygame.image.load("graphics/level/ground.png").convert()
 game_font = pygame.font.Font(pygame.font.get_default_font(), 50)
 
 # Load sprite assets
-player_surf = pygame.image.load("graphics/player/e0.png").convert_alpha()
-player_rect = player_surf.get_rect(bottomleft=(10, GROUND_Y))
+player_idle = pygame.image.load("graphics/player/e0.png").convert_alpha()
+player_jump_1 = pygame.image.load("graphics/player/e1.png").convert_alpha()
+player_jump_2= pygame.image.load("graphics/player/e2.png").convert_alpha()
+player_jump_3 = pygame.image.load("graphics/player/e3.png").convert_alpha()
+player_jump_4 = pygame.image.load("graphics/player/e4.png").convert_alpha()
+player_jump_5 = pygame.image.load("graphics/player/e5.png").convert_alpha()
+player_jump_6 = pygame.image.load("graphics/player/e6.png").convert_alpha()
+player_jump_7 = pygame.image.load("graphics/player/e7.png").convert_alpha()
+player_jump_8 = pygame.image.load("graphics/player/e8.png").convert_alpha()
+player_jump = [player_jump_1, player_jump_2, player_jump_3, player_jump_4, player_jump_5, player_jump_6, player_jump_7, player_jump_8]
+player_index = 0
+player_rect = player_idle.get_rect(bottomleft=(0, GROUND_Y))
 egg_surf = pygame.image.load("graphics/egg/egg_1.png").convert_alpha()
-
 egg_rect = egg_surf.get_rect(bottomleft=(800, GROUND_Y))
 
-
+#intro screen
+player_stand = pygame.image.load("graphics/player/e0.png").convert_alpha()
+player_stand_scaled = pygame.transform.rotozoom(player_stand,0,2)
+player_stand_rect = player_stand_scaled.get_rect(center = (400, 200))
 while running:
     # Poll for events
     for event in pygame.event.get():
@@ -71,7 +86,7 @@ while running:
 
         # Adjust egg's horizontal location then blit it depending on difficulty
         if difficulty == 1:
-            egg_rect.x -= 5 * difficulty
+            egg_rect.x -= 5
             if egg_rect.right <= 0:
                 egg_rect.left = 800
             screen.blit(egg_surf, egg_rect)
@@ -91,7 +106,7 @@ while running:
         player_rect.y += players_gravity_speed
         if player_rect.bottom > GROUND_Y:
             player_rect.bottom = GROUND_Y
-        screen.blit(player_surf, player_rect)
+        screen.blit(player_stand, player_rect)
         # Increasing difficulty and increasing the amount of score you get
         if score == 500:
             difficulty += 1
@@ -111,7 +126,8 @@ while running:
 
     # When game is over, display game over message
     else:
-        screen.fill("black")
+        screen.fill("purple")
+        screen.blit(player_stand_scaled,player_stand_rect)
 
     # flip the display to put your work on screen
     pygame.display.flip()
