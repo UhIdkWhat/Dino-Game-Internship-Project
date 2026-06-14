@@ -18,7 +18,8 @@ running = True  # Pygame main loop, kills pygame when False
 
 # Event timer for spawning obstacles
 obstacle_timer = pygame.USEREVENT + 1
-pygame.time.set_timer(obstacle_timer, 900)
+# faster initial spawn
+pygame.time.set_timer(obstacle_timer, 700)
 
 # High scores file
 HIGHSCORE_FILE = "highscores.txt"
@@ -67,13 +68,13 @@ wall_rect = wall_surf.get_rect(bottomleft=(800, GROUND_Y))
 arrow_surf = pygame.image.load("graphics/enemy/arrow.png").convert_alpha()
 arrow_rect = arrow_surf.get_rect(topleft=(800, 100))
 arrow_speed = 5
-arrow_active = False
+arrows = []
 
 # Load ruby collectible
 ruby_surf = pygame.image.load("graphics/enemy/ruby.png").convert_alpha()
 ruby_rect = ruby_surf.get_rect(bottomleft=(800, GROUND_Y))
 ruby_speed = 6
-ruby_active = False
+rubies = []
 
 RUBY_JUMP_OFFSET = 110
 
@@ -82,7 +83,7 @@ start_time = pygame.time.get_ticks()
 
 # Enemy/wall state
 wall_speed = 5
-wall_active = True
+walls = []
 game_over_zoom = 1.0
 zoom_speed = 0.03
 
@@ -138,9 +139,11 @@ while running:
             is_playing = True
             show_intro = False
             game_over = False
-            wall_active = False
-            arrow_active = False
-            ruby_active = False
+            # clear any existing enemies/collectibles
+            walls.clear()
+            arrows.clear()
+            rubies.clear()
+            # reset spare rects
             wall_rect.left = 800
             arrow_rect.left = 800
             ruby_rect.left = 800
@@ -157,30 +160,40 @@ while running:
         if event.type == obstacle_timer and is_playing:
             spawn_type = randint(0, 2)  # 0 = wall, 1 = arrow, 2 = ruby
             
-            if spawn_type == 0 and not wall_active:
+            if spawn_type == 0:
                 # Spawn wall at ground level
-                wall_active = True
-                wall_rect.left = 800
-                wall_speed = randint(5, 8) + (difficulty * 1.5)
-            elif spawn_type == 1 and not arrow_active:
+                new_rect = wall_surf.get_rect(bottomleft=(800, GROUND_Y))
+                new_speed = randint(5, 8) + (difficulty * 1.5)
+                walls.append([new_rect, new_speed])
+            elif spawn_type == 1:
                 # Spawn arrow at random sky height
-                arrow_active = True
-                arrow_rect.left = 800
-                arrow_rect.top = randint(50, 200)  # Random height in sky
-                arrow_speed = randint(5, 8) + (difficulty * 1.5)
-            elif spawn_type == 2 and not ruby_active:
-                # Spawn ruby collectible only when theres no enemies in the same position
-                if not wall_active and not arrow_active:
-                    ruby_active = True
-                    ruby_speed = randint(5, 7) + (difficulty * 0.5)
-                    if randint(0, 1) == 0:
-                        ruby_rect.bottomleft = (800, GROUND_Y)
-                    else:
-                        ruby_rect.bottomleft = (800, GROUND_Y - RUBY_JUMP_OFFSET)
+                new_rect = arrow_surf.get_rect(topleft=(800, randint(50, 200)))
+                new_speed = randint(5, 8) + (difficulty * 1.5)
+                arrows.append([new_rect, new_speed])
+            elif spawn_type == 2:
+                # Try to spawn a ruby; avoid spawning on top of existing enemies
+                ruby_speed = randint(5, 7) + (difficulty * 0.5)
+                # randomize whether we try ground-first or air-first so air spawns occur
+                if randint(0, 1) == 0:
+                    ys = (GROUND_Y, GROUND_Y - RUBY_JUMP_OFFSET)
+                else:
+                    ys = (GROUND_Y - RUBY_JUMP_OFFSET, GROUND_Y)
+                for y in ys:
+                    candidate = ruby_surf.get_rect(bottomleft=(800, y))
+                    # ensure candidate doesn't collide with any active wall or arrow
+                    collision = False
+                    for r, s in walls + arrows:
+                        if candidate.colliderect(r):
+                            collision = True
+                            break
+                    if not collision:
+                        rubies.append([candidate, ruby_speed])
+                        break
+                # if both positions blocked, skip this spawn
             
             # Schedule next spawn interval (shorter at higher difficulty)
-            min_interval = max(300, 700 - (difficulty * 50))
-            max_interval = max(500, 1400 - (difficulty * 100))
+            min_interval = max(150, 500 - (difficulty * 60))
+            max_interval = max(300, 1000 - (difficulty * 100))
             pygame.time.set_timer(obstacle_timer, randint(min_interval, max_interval))
 
     if is_playing:
@@ -204,41 +217,29 @@ while running:
         health_rect = health_surf.get_rect(topleft=(10, 50))
         screen.blit(health_surf, health_rect)
 
-        # Adjust wall's horizontal location then blit it depending on whether it's active
-        if wall_active:
-            wall_rect.x -= wall_speed
-            screen.blit(wall_surf, wall_rect)
-            if wall_rect.right <= 0:
-                # deactivate and schedule next spawn
-                wall_active = False
-                wall_rect.left = 800
-                min_interval = max(300, 700 - (difficulty * 50))
-                max_interval = max(500, 1400 - (difficulty * 100))
-                pygame.time.set_timer(obstacle_timer, randint(min_interval, max_interval))
+        # Move and draw walls (support multiple)
+        for i in range(len(walls)-1, -1, -1):
+            rect, spd = walls[i]
+            rect.x -= spd
+            screen.blit(wall_surf, rect)
+            if rect.right <= 0:
+                walls.pop(i)
 
-        # Adjust arrow's horizontal location then blit it
-        if arrow_active:
-            arrow_rect.x -= arrow_speed
-            screen.blit(arrow_surf, arrow_rect)
-            if arrow_rect.right <= 0:
-                # deactivate and schedule next spawn
-                arrow_active = False
-                arrow_rect.left = 800
-                min_interval = max(300, 700 - (difficulty * 50))
-                max_interval = max(500, 1400 - (difficulty * 100))
-                pygame.time.set_timer(obstacle_timer, randint(min_interval, max_interval))
+        # Move and draw arrows (support multiple)
+        for i in range(len(arrows)-1, -1, -1):
+            rect, spd = arrows[i]
+            rect.x -= spd
+            screen.blit(arrow_surf, rect)
+            if rect.right <= 0:
+                arrows.pop(i)
 
-        # Adjust ruby's horizontal location then blit it
-        if ruby_active:
-            ruby_rect.x -= ruby_speed
-            screen.blit(ruby_surf, ruby_rect)
-            if ruby_rect.right <= 0:
-                # deactivate and schedule next spawn
-                ruby_active = False
-                ruby_rect.left = 800
-                min_interval = max(300, 700 - (difficulty * 50))
-                max_interval = max(500, 1400 - (difficulty * 100))
-                pygame.time.set_timer(obstacle_timer, randint(min_interval, max_interval))
+        # Move and draw rubies (support multiple)
+        for i in range(len(rubies)-1, -1, -1):
+            rect, spd = rubies[i]
+            rect.x -= spd
+            screen.blit(ruby_surf, rect)
+            if rect.right <= 0:
+                rubies.pop(i)
 
         # Adjust player's vertical location then blit it
         players_gravity_speed += 1
@@ -276,22 +277,32 @@ while running:
             score += 1
         
         # Collect ruby pickups independently of the damage cooldown
-        if ruby_active and ruby_rect.colliderect(player_rect):
-            score += 50
-            ruby_active = False
-            ruby_rect.left = 800
+        for i in range(len(rubies)-1, -1, -1):
+            rect, spd = rubies[i]
+            if rect.colliderect(player_rect):
+                score += 50
+                rubies.pop(i)
 
         # When player collides with wall or arrow enemy, lose health
         current_time = pygame.time.get_ticks()
         if (current_time - last_hit_time > 500):
-            if wall_active and wall_rect.colliderect(player_rect):
-                health -= 1
-                last_hit_time = current_time
-                wall_active = False
-            elif arrow_active and arrow_rect.colliderect(player_rect):
-                health -= 1
-                last_hit_time = current_time
-                arrow_active = False
+            # check walls
+            for i in range(len(walls)-1, -1, -1):
+                rect, spd = walls[i]
+                if rect.colliderect(player_rect):
+                    health -= 1
+                    last_hit_time = current_time
+                    walls.pop(i)
+                    break
+            else:
+                # check arrows only if no wall collision handled
+                for i in range(len(arrows)-1, -1, -1):
+                    rect, spd = arrows[i]
+                    if rect.colliderect(player_rect):
+                        health -= 1
+                        last_hit_time = current_time
+                        arrows.pop(i)
+                        break
         
         if health <= 0:
             is_playing = False
